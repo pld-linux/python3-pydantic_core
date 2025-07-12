@@ -1,4 +1,3 @@
-# TODO: vendor external crates
 #
 # Conditional build:
 %bcond_without	tests	# unit tests
@@ -13,6 +12,10 @@ Group:		Libraries/Python
 #Source0Download: https://pypi.org/simple/pydantic-core/
 Source0:	https://files.pythonhosted.org/packages/source/p/pydantic_core/pydantic_core-%{version}.tar.gz
 # Source0-md5:	d4342593aad9b593c112da7ab0805ec1
+# cargo vendor-filterer --platform='*-unknown-linux-*' --tier=2
+# tar cJf pydantic_core-%{version}-vendor.tar.xz vendor Cargo.lock
+Source1:	pydantic_core-%{version}-vendor.tar.xz
+# Source1-md5:	054ff7422636ae4f206592c8f153e8e4
 URL:		https://pypi.org/project/pydantic_core/
 BuildRequires:	python3-build
 BuildRequires:	python3-devel >= 1:3.9
@@ -45,7 +48,9 @@ BuildRequires:	python3-typing_inspection >= 0.4.1
 BuildRequires:	python3-tzdata
 %endif
 BuildRequires:	rpm-pythonprov
-BuildRequires:	rpmbuild(macros) >= 1.714
+BuildRequires:	rpmbuild(macros) >= 2.044
+BuildRequires:	tar >= 1:1.22
+BuildRequires:	xz
 Requires:	python3-modules >= 1:3.9
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
@@ -63,9 +68,32 @@ serializacji klas.
 Jest około 17x szybszy od pydantica V1.
 
 %prep
-%setup -q -n pydantic_core-%{version}
+%setup -q -n pydantic_core-%{version} -a1
+
+# use our offline registry
+export CARGO_HOME="$(pwd)/.cargo"
+
+mkdir -p "$CARGO_HOME"
+cat >.cargo/config.toml <<EOF
+[source.crates-io]
+replace-with = "vendored-sources"
+
+[source.vendored-sources]
+directory = "$PWD/vendor"
+EOF
 
 %build
+export CARGO_BUILD_JOBS="%{__jobs}"
+export CARGO_HOME="$(pwd)/.cargo"
+export CARGO_OFFLINE=true
+export RUSTFLAGS="%{rpmrustflags}"
+export CARGO_TERM_VERBOSE=true
+%ifarch x32
+export CARGO_BUILD_TARGET=x86_64-unknown-linux-gnux32
+export PKG_CONFIG_ALLOW_CROSS=1
+export PYO3_CROSS_LIB_DIR=%{_libdir}
+%endif
+
 %py3_build_pyproject
 
 %if %{with tests}
@@ -79,6 +107,15 @@ PYTHONPATH=$(pwd)/build-3-test \
 
 %install
 rm -rf $RPM_BUILD_ROOT
+
+export CARGO_HOME="$(pwd)/.cargo"
+export CARGO_OFFLINE=true
+export RUSTFLAGS="%{rpmrustflags}"
+export CARGO_TERM_VERBOSE=true
+%ifarch x32
+export CARGO_BUILD_TARGET=x86_64-unknown-linux-gnux32
+export PKG_CONFIG_ALLOW_CROSS=1
+%endif
 
 %py3_install_pyproject
 
