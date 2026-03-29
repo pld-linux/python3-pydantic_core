@@ -5,22 +5,22 @@
 Summary:	Core functionality for Pydantic validation and serialization
 Summary(pl.UTF-8):	Podstawowa funkcjonalność walidacji i serializacji Pydantic
 Name:		python3-pydantic_core
-Version:	2.35.2
+Version:	2.41.5
 Release:	1
 License:	MIT
 Group:		Libraries/Python
-#Source0Download: https://pypi.org/simple/pydantic-core/
-Source0:	https://files.pythonhosted.org/packages/source/p/pydantic_core/pydantic_core-%{version}.tar.gz
-# Source0-md5:	d4342593aad9b593c112da7ab0805ec1
+#Source0Download: https://github.com/pydantic/pydantic-core/tags
+Source0:	https://github.com/pydantic/pydantic-core/archive/refs/tags/v%{version}/pydantic_core-%{version}.tar.gz
+# Source0-md5:	fab0b0ab281c36c1fe4f3a93bfce3714
 # cargo vendor-filterer --platform='*-unknown-linux-*' --tier=2
 # tar cJf pydantic_core-%{version}-vendor.tar.xz vendor Cargo.lock
 Source1:	pydantic_core-%{version}-vendor.tar.xz
-# Source1-md5:	054ff7422636ae4f206592c8f153e8e4
+# Source1-md5:	709dceb042a739d5b5295662ef9a98b4
 URL:		https://pypi.org/project/pydantic_core/
 BuildRequires:	python3-build
 BuildRequires:	python3-devel >= 1:3.9
 BuildRequires:	python3-installer
-BuildRequires:	python3-maturin >= 1
+BuildRequires:	python3-maturin >= 1.9.4
 BuildRequires:	python3-maturin < 2
 BuildRequires:	rust >= 1.75
 %if %{with tests}
@@ -68,7 +68,7 @@ serializacji klas.
 Jest około 17x szybszy od pydantica V1.
 
 %prep
-%setup -q -n pydantic_core-%{version} -a1
+%setup -q -n pydantic-core-%{version} -a1
 
 # use our offline registry
 export CARGO_HOME="$(pwd)/.cargo"
